@@ -21,5 +21,8 @@ else()
 
     target_link_libraries(capirepl PRIVATE ${CAPILITE_LIB10} ${CAPILITE_LIB20})
 
-    target_compile_definitions(capirepl PRIVATE UNIX)
+    target_compile_definitions(capirepl PRIVATE 
+        UNIX
+        SIZEOF_VOID_P=${CMAKE_SIZEOF_VOID_P}
+    )
 endif()
