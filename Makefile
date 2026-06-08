@@ -1,3 +1,15 @@
+.DEFAULT_GOAL := build
+
+CONFIG ?= Debug
+
+# Auto-correct lowercase input variants
+ifeq ($(CONFIG),debug)
+    CONFIG := Debug
+endif
+ifeq ($(CONFIG),release)
+    CONFIG := Release
+endif
+
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
     EXE_EXT := .exe
@@ -14,18 +26,6 @@ else
         NUM_CORES := $(shell nproc)
     endif
 endif
-
-CONFIG ?= Debug
-
-# Auto-correct lowercase input variants
-ifeq ($(CONFIG),debug)
-    CONFIG := Debug
-endif
-ifeq ($(CONFIG),release)
-    CONFIG := Release
-endif
-
-.DEFAULT_GOAL := build
 
 .PHONY: help
 help: ## Display this help screen
