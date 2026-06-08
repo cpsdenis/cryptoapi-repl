@@ -1,6 +1,15 @@
-#include <windows.h>
-#include <wincrypt.h>
-#include <WinCryptEx.h>
+#ifdef _WIN32
+    #include <windows.h>
+    #include <wincrypt.h>
+    #include <WinCryptEx.h>
+#else
+    #include <stdlib.h>
+    #include <string.h>
+    #include <CSP_WinDef.h>
+    #include <CSP_WinCrypt.h>
+    #include <WinCryptEx.h>
+#endif
+
 #include <iostream>
 #include <vector>
 #include <iomanip>
@@ -22,24 +31,26 @@ int main() {
     DWORD hashLen = 0;
 
     // 1. Acquire a cryptographic provider context for GOST R 34.10-2012 (256-bit)
-    // PROV_GOST_2012_256 is declared inside WinCryptEx.h
     if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_GOST_2012_256, CRYPT_VERIFYCONTEXT)) {
+#ifdef WIN32
         DWORD err = GetLastError();
         std::cerr << "CryptAcquireContext failed. Error: 0x" << std::hex << err << std::endl;
+#else
+        std::cerr << "CryptAcquireContext failed." << std::endl;
+#endif
         return 1;
     }
 
     // 2. Create a hash object
-    // CALG_GR3411_2012_256 is declared inside WinCryptEx.h
     if (!CryptCreateHash(hProv, CALG_GR3411_2012_256, 0, 0, &hHash)) {
-        std::cerr << "CryptCreateHash failed. Error: " << GetLastError() << std::endl;
+        std::cerr << "CryptCreateHash failed." << std::endl;
         CryptReleaseContext(hProv, 0);
         return 1;
     }
 
     // 3. Hash the data
     if (!CryptHashData(hHash, reinterpret_cast<const BYTE*>(message.c_str()), static_cast<DWORD>(message.length()), 0)) {
-        std::cerr << "CryptHashData failed. Error: " << GetLastError() << std::endl;
+        std::cerr << "CryptHashData failed." << std::endl;
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
         return 1;
@@ -48,7 +59,7 @@ int main() {
     // 4. Retrieve the hash size
     DWORD dwSize = sizeof(DWORD);
     if (!CryptGetHashParam(hHash, HP_HASHSIZE, reinterpret_cast<BYTE*>(&hashLen), &dwSize, 0)) {
-        std::cerr << "CryptGetHashParam (size) failed. Error: " << GetLastError() << std::endl;
+        std::cerr << "CryptGetHashParam (size) failed." << std::endl;
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
         return 1;
@@ -57,7 +68,7 @@ int main() {
     // 5. Get the hash value
     hashResult.resize(hashLen);
     if (!CryptGetHashParam(hHash, HP_HASHVAL, hashResult.data(), &hashLen, 0)) {
-        std::cerr << "CryptGetHashParam (value) failed. Error: " << GetLastError() << std::endl;
+        std::cerr << "CryptGetHashParam (value) failed." << std::endl;
         CryptDestroyHash(hHash);
         CryptReleaseContext(hProv, 0);
         return 1;
